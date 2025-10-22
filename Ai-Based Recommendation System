@@ -1,0 +1,87 @@
+import java.util.*;
+
+public class AIRecommendationSystem {
+
+    // Movie dataset (Movie name -> Genre)
+    private static final Map<String, String> movies = new LinkedHashMap<>();
+
+    static {
+        movies.put("Inception", "Sci-Fi Action Thriller");
+        movies.put("Interstellar", "Sci-Fi Drama Adventure");
+        movies.put("The Dark Knight", "Action Crime Drama");
+        movies.put("Titanic", "Romance Drama");
+        movies.put("Avengers: Endgame", "Action Sci-Fi Superhero");
+        movies.put("The Matrix", "Sci-Fi Action");
+        movies.put("La La Land", "Romance Musical Drama");
+        movies.put("The Shawshank Redemption", "Drama Crime");
+        movies.put("Spider-Man: No Way Home", "Action Sci-Fi Superhero");
+        movies.put("Gravity", "Sci-Fi Thriller Drama");
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("===== AI-BASED MOVIE RECOMMENDATION SYSTEM =====");
+        System.out.print("Enter a movie you like: ");
+        String inputMovie = scanner.nextLine();
+
+        if (!movies.containsKey(inputMovie)) {
+            System.out.println("Movie not found in the database!");
+            return;
+        }
+
+        String inputGenre = movies.get(inputMovie);
+        Map<String, Double> similarityScores = new HashMap<>();
+
+        // Calculate similarity between input movie and all others
+        for (Map.Entry<String, String> entry : movies.entrySet()) {
+            if (!entry.getKey().equalsIgnoreCase(inputMovie)) {
+                double score = cosineSimilarity(inputGenre, entry.getValue());
+                similarityScores.put(entry.getKey(), score);
+            }
+        }
+
+        // Sort movies by similarity score (descending)
+        List<Map.Entry<String, Double>> sortedList = new ArrayList<>(similarityScores.entrySet());
+        sortedList.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+
+        // Display top 3 recommendations
+        System.out.println("\nTop Recommendations for \"" + inputMovie + "\":");
+        for (int i = 0; i < Math.min(3, sortedList.size()); i++) {
+            System.out.printf("%d. %s (Similarity: %.2f)\n",
+                    i + 1, sortedList.get(i).getKey(), sortedList.get(i).getValue());
+        }
+    }
+
+    // Function to compute cosine similarity between two genre strings
+    private static double cosineSimilarity(String text1, String text2) {
+        Set<String> words1 = new HashSet<>(Arrays.asList(text1.toLowerCase().split(" ")));
+        Set<String> words2 = new HashSet<>(Arrays.asList(text2.toLowerCase().split(" ")));
+
+        Set<String> allWords = new HashSet<>();
+        allWords.addAll(words1);
+        allWords.addAll(words2);
+
+        int[] vector1 = new int[allWords.size()];
+        int[] vector2 = new int[allWords.size()];
+
+        int index = 0;
+        for (String word : allWords) {
+            vector1[index] = words1.contains(word) ? 1 : 0;
+            vector2[index] = words2.contains(word) ? 1 : 0;
+            index++;
+        }
+
+        return cosine(vector1, vector2);
+    }
+
+    // Helper function for cosine similarity calculation
+    private static double cosine(int[] a, int[] b) {
+        double dot = 0.0, normA = 0.0, normB = 0.0;
+        for (int i = 0; i < a.length; i++) {
+            dot += a[i] * b[i];
+            normA += Math.pow(a[i], 2);
+            normB += Math.pow(b[i], 2);
+        }
+        return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+}
